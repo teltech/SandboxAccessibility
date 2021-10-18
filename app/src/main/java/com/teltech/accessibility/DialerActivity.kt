@@ -7,14 +7,21 @@ import android.os.Build
 import android.os.Bundle
 import android.telecom.TelecomManager
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 
 class DialerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dialer)
 
+        findViewById<MaterialButton>(R.id.leadToPermissionsActivity).setOnClickListener {
+            startActivity(Intent(this, PermissionsActivity::class.java))
+        }
+
         if (!checkIfDialerEnabled(this)) {
             checkDefaultPhoneApp()
+        } else {
+            startActivity(Intent(this, PermissionsActivity::class.java))
         }
     }
 

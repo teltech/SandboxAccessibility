@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">SandboxAccessibility</string>
+
+    <string name="not_now">Not now</string>
+
+    <string name="activate_call_assistant">Activate Call Assistant</string>
+    <string name="activate_call_assistant_subtitle">We\'ll use these permissions to make call recording as easy as 3 steps.</string>
+    <string name="contacts_permission">Contacts permission</string>
+    <string name="phone_call_permission">Phone call permission</string>
+    <string name="draw_overlay_permission">Draw overlay permission</string>
+    <string name="manager_role_permission">Manager role permission</string>
+    <string name="activate">Activate</string>
 </resources>
+
