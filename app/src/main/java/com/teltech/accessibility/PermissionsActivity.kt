@@ -14,8 +14,8 @@ import com.google.android.material.button.MaterialButton
 
 const val PERMISSIONS_REQUEST_CONTACTS = 77
 const val REQUEST_CALL_BLOCKING_PERMISSION = 78
-const val REQUEST_OVERLAY_PERMISSION = 79
 const val REQUEST_CALL_SCREENING_ROLE = 80
+const val REQUEST_RECORDING = 81
 
 class PermissionsActivity : AppCompatActivity() {
 
@@ -41,14 +41,18 @@ class PermissionsActivity : AppCompatActivity() {
     private fun checkAllPermissionsAndActivateCallService() {
         if (PermissionsUtility.checkIfContactsGranted(this)) {
             if (PermissionsUtility.checkIfCallServiceStateGranted(this)) {
-                if (Settings.canDrawOverlays(this)) {
-                    if (roleManagerGranted()) {
-                        SharePrefUtil.setBoolean(Constants.CALL_SERVICE_STATUS, true)
+                if (PermissionsUtility.checkIfRecordAudioGranted(this)) {
+                    if (Settings.canDrawOverlays(this)) {
+                        if (roleManagerGranted()) {
+                            SharePrefUtil.setBoolean(Constants.CALL_SERVICE_STATUS, true)
+                        } else {
+                            requestCallScreeningServiceRole()
+                        }
                     } else {
-                        requestCallScreeningServiceRole()
+                        requestOverlayPermission()
                     }
                 } else {
-                    requestOverlayPermission()
+                    requestRecordAudioPermission()
                 }
             } else {
                 requestCallPermission()
@@ -56,6 +60,17 @@ class PermissionsActivity : AppCompatActivity() {
         } else {
             requestContactsPermission()
         }
+    }
+
+    private fun requestRecordAudioPermission() {
+        requestPermissions(
+            arrayOf(
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ),
+            REQUEST_RECORDING
+        )
     }
 
     private fun roleManagerGranted(): Boolean {

@@ -33,6 +33,8 @@ object PermissionsUtility {
             context,
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
+                && checkIfWriteExternalStorageGranted(context)
+                && checkIfReadExternalStorageGranted(context)
     }
 
     fun checkIfWriteExternalStorageGranted(context: Context): Boolean {
@@ -72,7 +74,7 @@ object PermissionsUtility {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun checkIfCallServiceStateGranted(context: Context): Boolean{
+    fun checkIfCallServiceStateGranted(context: Context): Boolean {
         return checkIfCallPhoneGranted(context) && checkIfReadPhoneStateGranted(context) /*&& checkIfReadCallLogGranted(context)*/
     }
 }
