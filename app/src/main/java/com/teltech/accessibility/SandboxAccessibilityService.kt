@@ -1,18 +1,21 @@
 package com.teltech.accessibility
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
 import android.content.*
+import android.graphics.PixelFormat
 import android.media.AudioManager
 import android.media.MediaRecorder
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.util.Log
+import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.widget.FrameLayout
 import java.io.FileDescriptor
 import java.io.IOException
+
 
 const val LOG_TAG_S = "MyService:"
 
@@ -24,27 +27,6 @@ class SandboxAccessibilityService : AccessibilityService() {
     var isRecording = false
     private lateinit var catchingCallReceiver: BroadcastReceiver
 
-    @SuppressLint("RtlHardcoded")
-    override fun onCreate() {
-        super.onCreate()
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager?
-
-        catchingCallReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.getBooleanExtra(Constants.IS_CALL_ACTIVE, false) == true) {
-                    isRecording = true
-                    startRecording()
-                } else {
-                    stopRecording()
-                    isRecording = false
-                }
-            }
-
-        }
-        registerReceiver(catchingCallReceiver, IntentFilter(Constants.CALL_ANSWERED))
-        Log.i("start Myservice", "MyService");
-    }
-
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         Log.e(LOG_TAG_S, "Event :" + event?.eventType)
     }
@@ -53,13 +35,44 @@ class SandboxAccessibilityService : AccessibilityService() {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onServiceConnected() {
-        val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-            notificationTimeout = 100
-        }
+        try {
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager?
 
-        serviceInfo = info
+            catchingCallReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.getBooleanExtra(Constants.IS_CALL_ACTIVE, false) == true) {
+                        isRecording = true
+                        putUIToFocus()
+                        startRecording()
+                    } else {
+                        stopRecording()
+                        isRecording = false
+                    }
+                }
+
+            }
+            registerReceiver(catchingCallReceiver, IntentFilter(Constants.CALL_ANSWERED))
+            Log.i("start Myservice", "MyService")
+        } catch (exception: java.lang.Exception) {
+            exception.printStackTrace()
+        }
+    }
+
+    private fun putUIToFocus() {
+        val layout = FrameLayout(this)
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_FULLSCREEN or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS or
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.TOP
+
+        windowManager?.addView(layout, params)
     }
 
     /**
@@ -87,6 +100,8 @@ class SandboxAccessibilityService : AccessibilityService() {
             recorder?.start()
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e(LOG_TAG_S, "start() failed")
+            isRecording = false
         }
     }
 
@@ -107,7 +122,7 @@ class SandboxAccessibilityService : AccessibilityService() {
      */
     private fun buildMediaRecorder(): MediaRecorder =
         MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC)
             setOutputFile(getFileDescriptor())
@@ -134,6 +149,7 @@ class SandboxAccessibilityService : AccessibilityService() {
 
     override fun onDestroy() {
         unregisterReceiver(catchingCallReceiver)
+        Log.e(LOG_TAG_S, "On destroy")
         super.onDestroy()
     }
 
